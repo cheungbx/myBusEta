@@ -26,7 +26,7 @@
                     <tr>
                         <th class="p-3">類別</th>
                         <th class="p-3">路線</th>
-                        <th class="p-3">自</th>
+                        <th class="p-3">從</th>
                         <th class="p-3">開往</th>
                         <th class="p-3">ETA (分)</th>
                     </tr>
@@ -39,6 +39,7 @@
     </div>
 
     <script>
+        // Parsed schedule data from images
         const schedules = {
             "OceanPointeToTsuenWan": {
                 monFri: ["06:30", "06:50", "07:10", "07:20", "07:30", "07:40", "07:50", "08:00", "08:10", "08:20", "08:30", "08:50", "09:10", "09:30", "09:50", "10:10", "10:30", "10:50", "11:10", "11:30", "11:50", "12:10", "12:30", "12:50", "13:30", "14:50", "15:30", "15:50", "16:10", "16:30", "16:50", "17:10", "17:30", "17:50", "18:10", "18:30", "18:50", "19:10", "19:30", "19:50"],
@@ -53,28 +54,29 @@
         };
 
         const busRoutes = [
-            { id: '屋苑', route: '穿梭巴士', dir: '荃灣', stop: '縉皇居', api: 'OceanPointeToTsuenWan' },
-            { id: '屋苑', route: '穿梭巴士', dir: '縉皇居', stop: '荃灣', api: 'TsuenWantoOceanPointe' },
-            { id: 'KMB', route: '234A', dir: '荃灣', stop: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234A/1' },
-            { id: 'KMB', route: '234B', dir: '荃灣', stop: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234B/1' },
-            { id: 'KMB', route: '53', dir: '荃灣', stop: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/53/1' },
-            { id: 'KMB', route: '234C', dir: '觀塘', stop: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234C/1' },
-            { id: 'KMB', route: '234D', dir: '觀塘', stop: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234D/1' },
-            { id: 'KMB', route: '261B', dir: '九龍站', stop: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/261B/1' },
-            { id: 'KMB', route: '48P', dir: '火炭', stop: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/48P/1' },
-            { id: 'KMB', route: '52P', dir: '旺角', stop: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/52P/1' },
-            { id: 'GMB', route: '96C', dir: '荃灣', stop: '碧堤半島', api: 'https://data.etagmb.gov.hk/eta/route-stop/2008093/2/1' },
-            { id: 'KMB', route: '52X', dir: '旺角', stop: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/52X/1' },
-            { id: 'CTB', route: '952', dir: '銅鑼灣', stop: '海韻花園', api: 'https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/002618/952' },
-            { id: 'KMB', route: 'A38', dir: '機場', stop: '深井深慈街', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/5A2A66038B409879/A38/1' },
-            { id: 'KMB', route: '52X', dir: '屯門', stop: '碧堤半島', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/B47C12A965D7B481/52X/1' },
-            { id: 'KMB', route: '53', dir: '屯門', stop: '碧堤半島', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/B47C12A965D7B481/53/1' },
-            { id: 'CTB', route: '952', dir: '屯門', stop: '碧堤半島', api: 'https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/002619/952' }
+            { id: '屋苑', route: '穿梭巴士', from: '縉皇居', dir: '荃灣', api: 'OceanPointeToTsuenWan' },
+            { id: '屋苑', route: '穿梭巴士', from: '荃灣', dir: '縉皇居', api: 'TsuenWantoOceanPointe' },
+            { id: 'KMB', route: '234A', from: '海韻花園', dir: '荃灣', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234A/1' },
+            { id: 'KMB', route: '234B', from: '海韻花園', dir: '荃灣', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234B/1' },
+            { id: 'KMB', route: '53', from: '海韻花園', dir: '荃灣', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/53/1' },
+            { id: 'KMB', route: '234C', from: '海韻花園', dir: '觀塘', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234C/1' },
+            { id: 'KMB', route: '234D', from: '海韻花園', dir: '觀塘', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234D/1' },
+            { id: 'KMB', route: '261B', from: '海韻花園', dir: '九龍站', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/261B/1' },
+            { id: 'KMB', route: '48P', from: '海韻花園', dir: '火炭', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/48P/1' },
+            { id: 'KMB', route: '52P', from: '海韻花園', dir: '旺角', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/52P/1' },
+            { id: 'GMB', route: '96C', from: '碧堤半島', dir: '荃灣', api: 'https://data.etagmb.gov.hk/eta/route-stop/2008093/2/1' },
+            { id: 'KMB', route: '52X', from: '海韻花園', dir: '旺角', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/52X/1' },
+            { id: 'CTB', route: '952', from: '海韻花園', dir: '銅鑼灣', api: 'https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/002618/952' },
+            { id: 'KMB', route: 'A38', from: '深井深慈街', dir: '機場', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/5A2A66038B409879/A38/1' },
+            { id: 'KMB', route: '52X', from: '碧堤半島', dir: '屯門', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/B47C12A965D7B481/52X/1' },
+            { id: 'KMB', route: '53', from: '碧堤半島', dir: '元朗', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/B47C12A965D7B481/53/1' },
+            { id: 'CTB', route: '952', from: '碧堤半島', dir: '屯門', api: 'https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/002619/952' }
         ];
 
         let countdown = 10;
         let isTodayHoliday = false;
 
+        // Fetching HK Holiday from 1823
         async function checkHoliday() {
             try {
                 const year = new Date().getFullYear();
@@ -95,6 +97,7 @@
             document.getElementById('clock').innerText = `縉皇居交通 ${hkTime}`;
         }
 
+        // Logic for internal shuttle buses
         async function getStaticETA(bus) {
             const now = new Date();
             const day = now.getDay();
@@ -113,6 +116,7 @@
             });
         }
 
+        // Logic for API buses
         async function fetchAPI(bus) {
             try {
                 const res = await fetch(bus.api);
@@ -130,17 +134,18 @@
             } catch { return null; }
         }
 
+        // Refresh logic
         async function refreshData() {
             const tbody = document.getElementById('bus-table-body');
             tbody.innerHTML = '';
             for (const bus of busRoutes) {
                 const etas = bus.api.startsWith('http') ? await fetchAPI(bus) : await getStaticETA(bus);
-                if (!etas) continue;
+                if (!etas || etas.length === 0) continue;
                 const row = `
                     <tr class="border-t hover:bg-gray-50">
                         <td class="p-3 font-medium text-gray-500">${bus.id}</td>
                         <td class="p-3 font-bold">${bus.route}</td>
-                        <td class="p-3 text-sm">${bus.stop}</td>
+                        <td class="p-3 text-sm">${bus.from}</td>
                         <td class="p-3 text-sm">${bus.dir}</td>
                         <td class="p-3 text-red-600 font-mono font-bold">${etas.join(' ')}</td>
                     </tr>
@@ -149,6 +154,7 @@
             }
         }
 
+        // Timer
         setInterval(() => {
             updateClock();
             if (--countdown <= 0) {
