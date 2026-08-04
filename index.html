@@ -3,159 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>縉皇居交通</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>縉皇居交通 - 實時到站時間</title>
+    <!-- Favicon / Smartphone Icon Setup -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/bus.png">
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/bus.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        :root {
+            --primary-color: #1a365d;
+            --secondary-color: #2b6cb0;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --accent-green: #2f855a;
+            --accent-orange: #dd6b20;
+            --accent-red: #c53030;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            margin: 0 0 6px 0;
+            font-size: 1.4rem;
+            color: var(--primary-color);
+        }
+        .header .datetime {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .bus-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .bus-table th {
+            background-color: #edf2f7;
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            padding: 10px 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .bus-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #edf2f7;
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+        .bus-table tr:last-child td {
+            border-bottom: none;
+        }
+        .route-badge {
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .eta-pill {
+            display: inline-block;
+            padding: 4px 8px;
+            margin-right: 4px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            background-color: #edf2f7;
+            color: var(--text-main);
+            min-width: 28px;
+            text-align: center;
+        }
+        .eta-soon {
+            background-color: #fed7d7;
+            color: var(--accent-red);
+        }
+        .eta-medium {
+            background-color: #feebc8;
+            color: var(--accent-orange);
+        }
+        .eta-far {
+            background-color: #c6f6d5;
+            color: var(--accent-green);
+        }
+        .status-msg {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+        @media (max-width: 480px) {
+            body { padding: 4px; }
+            .container { padding: 10px; }
+            .bus-table th, .bus-table td { padding: 8px 4px; font-size: 0.85rem; }
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
-        <header class="mb-6">
-            <h1 class="text-2xl font-bold text-red-600" id="clock">縉皇居交通 --:--:--</h1>
-        </header>
+<body>
 
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-            <table class="w-full text-left border-collapse text-sm md:text-base">
-                <thead class="bg-gray-100 text-gray-700">
-                    <tr>
-                        <th class="p-3">類別</th>
-                        <th class="p-3">開往</th>
-                        <th class="p-3">路線</th>
-                        <th class="p-3">發車站</th>
-                        <th class="p-3">ETA (分)</th>
-                    </tr>
-                </thead>
-                <tbody id="bus-table-body">
-                    <tr><td colspan="5" class="p-4 text-center">載入中...</td></tr>
-                </tbody>
-            </table>
-        </div>
+<div class="container">
+    <div class="header">
+        <h1 id="page-title">縉皇居交通</h1>
+        <div class="datetime" id="current-datetime">載入中...</div>
     </div>
 
-    <script>
-        const schedules = {
-            "OceanPointeToTsuenWan": {
-                monFri: ["06:30", "06:50", "07:10", "07:20", "07:30", "07:40", "07:50", "08:00", "08:10", "08:20", "08:30", "08:50", "09:10", "09:30", "09:50", "10:10", "10:30", "10:50", "11:10", "11:30", "11:50", "12:10", "12:30", "12:50", "13:30", "14:50", "15:30", "15:50", "16:10", "16:30", "16:50", "17:10", "17:30", "17:50", "18:10", "18:30", "18:50", "19:10", "19:30", "19:50"],
-                sat: ["06:30", "06:50", "07:10", "07:30", "07:50", "08:10", "08:30", "08:50", "09:10", "09:30", "09:50", "10:10", "10:30", "10:50", "11:10", "11:30", "11:50", "12:10", "12:30", "12:50", "13:30", "14:50", "15:30", "15:50", "16:10", "16:30", "16:50", "17:10", "17:30", "17:50", "18:10", "18:30", "18:50", "19:10", "19:30"],
-                sunHol: ["06:50", "07:35", "08:20", "09:05", "09:50", "10:35", "11:20", "12:05", "12:50", "14:50", "15:35", "16:20", "17:05", "17:50", "18:35", "19:20"]
-            },
-            "TsuenWantoOceanPointe": {
-                monFri: ["06:45", "07:05", "07:25", "07:45", "08:05", "08:25", "08:45", "09:05", "09:25", "09:45", "10:05", "10:25", "10:45", "11:05", "11:25", "11:45", "12:05", "12:25", "12:45", "13:05", "13:45", "15:05", "15:45", "16:05", "16:25", "16:45", "17:05", "17:25", "17:45", "18:05", "18:25", "18:45", "19:05", "19:25", "19:45", "20:05"],
-                sat: ["06:45", "07:05", "07:25", "07:45", "08:05", "08:25", "08:45", "09:05", "09:25", "09:45", "10:05", "10:25", "10:45", "11:05", "11:25", "11:45", "12:05", "12:25", "12:45", "13:05", "13:45", "15:05", "15:45", "16:05", "16:25", "16:45", "17:05", "17:25", "17:45", "18:05", "18:25", "18:45", "19:05", "19:25", "19:45"],
-                sunHol: ["07:05", "07:50", "08:35", "09:20", "10:05", "10:50", "11:35", "12:20", "13:05", "15:05", "15:50", "16:35", "17:20", "18:05", "18:50", "19:35"]
-            }
-        };
+    <table class="bus-table">
+        <thead>
+            <tr>
+                <th>開往</th>
+                <th>路線</th>
+                <th>發車站</th>
+                <th>預計到達時間 (分鐘)</th>
+            </tr>
+        </thead>
+        <tbody id="bus-data-body">
+            <tr><td colspan="4" style="text-align: center; padding: 20px;" class="status-msg">正在更新實時到站數據...</td></tr>
+        </tbody>
+    </table>
+</div>
 
-        const busRoutes = [
-            { id: '屋苑', dir: '荃灣', route: '邨巴', from: '縉皇居', api: 'OceanPointeToTsuenWan' },
-            { id: '屋苑', dir: '縉皇居', route: '邨巴', from: '荃灣', api: 'TsuenWantoOceanPointe' },
-            { id: 'KMB', dir: '荃灣', route: '234A', from: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234A/1' },
-            { id: 'KMB', dir: '荃灣', route: '234B', from: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234B/1' },
-            { id: 'KMB', dir: '荃灣', route: '53', from: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/53/1' },
-            { id: 'KMB', dir: '觀塘', route: '234C', from: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234C/1' },
-            { id: 'KMB', dir: '觀塘', route: '234D', from: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234D/1' },
-            { id: 'KMB', dir: '九龍站', route: '261B', from: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/261B/1' },
-            { id: 'KMB', dir: '火炭', route: '48P', from: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/48P/1' },
-            { id: 'KMB', dir: '旺角', route: '52P', from: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/52P/1' },
-            { id: 'GMB', dir: '荃灣', route: '96C', from: '碧堤半島', api: 'https://data.etagmb.gov.hk/eta/route-stop/2008093/2/1' },
-            { id: 'KMB', dir: '旺角', route: '52X', from: '海韻花園', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/52X/1' },
-            { id: 'CTB', dir: '銅鑼灣', route: '952', from: '海韻花園', api: 'https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/002618/952' },
-            { id: 'KMB', dir: '機場', route: 'A38', from: '深井深慈街', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/5A2A66038B409879/A38/1' },
-            { id: 'KMB', dir: '屯門', route: '52X', from: '碧堤半島', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/B47C12A965D7B481/52X/1' },
-            { id: 'KMB', dir: '元朗', route: '53', from: '碧堤半島', api: 'https://data.etabus.gov.hk/v1/transport/kmb/eta/B47C12A965D7B481/53/1' },
-            { id: 'CTB', dir: '屯門', route: '952', from: '碧堤半島', api: 'https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/002619/952' }
-        ];
+<script>
+    const busInstructions = [
+        { co: "屋苑", route: "邨巴", dir: "荃灣", stop: "縉皇居", source: "TsuenWantoOceanPointe.jpg" },
+        { co: "屋苑", route: "邨巴", dir: "縉皇居", stop: "荃灣", source: "OceanPointeToTsuenWan.jpg" },
+        { co: "KMB", route: "234A", dir: "荃灣", stop: "海韻花園", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234A/1" },
+        { co: "KMB", route: "234B", dir: "荃灣", stop: "海韻花園", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234B/1" },
+        { co: "KMB", route: "53", dir: "荃灣", stop: "海韻花園", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/53/1" },
+        { co: "KMB", route: "234C", dir: "觀塘", stop: "海韻花園", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234C/1" },
+        { co: "KMB", route: "234D", dir: "觀塘", stop: "海韻花園", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/234D/1" },
+        { co: "KMB", route: "261B", dir: "九龍站", stop: "海韻花園", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/261B/1" },
+        { co: "KMB", route: "48P", dir: "火炭", stop: "海韻花園", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/48P/1" },
+        { co: "KMB", route: "52P", dir: "旺角", stop: "海韻花園", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/52P/1" },
+        { co: "GMB", route: "96C", dir: "荃灣", stop: "碧堤半島", source: "https://data.etagmb.gov.hk/eta/route-stop/2008093/2/1" },
+        { co: "KMB", route: "52X", dir: "旺角", stop: "海韻花園", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/ED9E5ACF98190E5C/52X/1" },
+        { co: "CTB", route: "952", dir: "銅鑼灣", stop: "海韻花園", source: "https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/002618/952" },
+        { co: "KMB", route: "A38", dir: "機場", stop: "深井深慈街", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/5A2A66038B409879/A38/1" },
+        { co: "KMB", route: "52X", dir: "屯門", stop: "碧堤半島", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/B47C12A965D7B481/52X/1" },
+        { co: "KMB", route: "53", dir: "元朗", stop: "碧堤半島", source: "https://data.etabus.gov.hk/v1/transport/kmb/eta/B47C12A965D7B481/53/1" },
+        { co: "CTB", route: "952", dir: "屯門", stop: "碧堤半島", source: "https://rt.data.gov.hk/v2/transport/citybus/eta/ctb/002619/952" }
+    ];
 
-        let isTodayHoliday = false;
+    const estateSchedules = {
+        "TsuenWantoOceanPointe.jpg": {
+            1: ["07:30", "08:00", "08:30", "09:00", "18:30", "19:00", "19:30", "20:00", "21:00", "22:00"],
+            2: ["08:00", "09:00", "10:00", "18:00", "19:00", "20:00", "21:00"],
+            3: ["08:00", "09:00", "10:00", "18:00", "19:00", "20:00", "21:00"]
+        },
+        "OceanPointeToTsuenWan.jpg": {
+            1: ["07:15", "07:45", "08:15", "08:45", "18:15", "18:45", "19:15", "19:45", "20:45", "21:45"],
+            2: ["07:45", "08:45", "09:45", "17:45", "18:45", "19:45", "20:45"],
+            3: ["07:45", "08:45", "09:45", "17:45", "18:45", "19:45", "20:45"]
+        }
+    };
 
-        async function checkHoliday() {
-            try {
-                const year = new Date().getFullYear();
-                const response = await fetch(`https://www.1823.gov.hk/common/ical/en.json`);
+    let cachedHkHolidays = [];
+
+    async function loadHkHolidays() {
+        try {
+            const year = new Date().getFullYear();
+            const response = await fetch(`https://www.gov.hk/tc/about/abouthk/time/docs/govholidays${year}.json`);
+            if (response.ok) {
                 const data = await response.json();
-                const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-                isTodayHoliday = data.vcalendar[0].vevent.some(e => e['dtstart;value=date'] === today);
-            } catch (e) { isTodayHoliday = false; }
+                cachedHkHolidays = data.vcalendar.map(item => item.dtstart);
+            }
+        } catch (e) {
+            console.warn("Unable to fetch online public holidays.");
         }
+    }
 
-        function updateClock() {
-            const now = new Date();
-            const hkTime = new Intl.DateTimeFormat('en-GB', {
-                timeZone: 'Asia/Hong_Kong',
-                day: '2-digit', month: 'short', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            }).format(now);
-            document.getElementById('clock').innerText = `縉皇居交通 ${hkTime}`;
+    function isPublicHoliday(dateStr) {
+        return cachedHkHolidays.includes(dateStr);
+    }
+
+    function getScheduleColumn(now) {
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const dateString = `${year}${month}${day}`;
+
+        const dayOfWeek = now.getDay();
+        if (dayOfWeek === 0 || isPublicHoliday(dateString)) {
+            return 3;
+        } else if (dayOfWeek === 6) {
+            return 2;
         }
+        return 1;
+    }
 
-        async function getStaticETA(bus) {
-            const now = new Date();
-            const day = now.getDay();
-            let key = (day === 0 || isTodayHoliday) ? 'sunHol' : (day === 6 ? 'sat' : 'monFri');
-            const sched = schedules[bus.api][key];
-            const currentHM = now.getHours() * 60 + now.getMinutes();
-            const nextBuses = sched.filter(t => {
-                const [h, m] = t.split(':').map(Number);
-                return (h * 60 + m) >= currentHM;
-            }).slice(0, 3);
-            
-            if (nextBuses.length === 0) return null;
-            return nextBuses.map(t => {
-                const [h, m] = t.split(':').map(Number);
-                return (h * 60 + m) - currentHM;
-            });
-        }
+    function calculateStaticEtas(filename, now) {
+        const scheduleMap = estateSchedules[filename];
+        if (!scheduleMap) return [];
 
-        async function fetchAPI(bus) {
-            try {
-                const res = await fetch(bus.api);
-                const data = await res.json();
-                const items = data.data || [];
-                const now = new Date();
-                const etas = items.map(i => {
-                    if (!i.eta) return null;
-                    const etaTime = new Date(i.eta);
-                    const diff = Math.round((etaTime - now) / 60000);
-                    return diff < 0 ? 0 : diff;
-                }).filter(v => v !== null).slice(0, 3);
-                
-                return etas.length > 0 ? etas : null;
-            } catch { return null; }
-        }
+        const col = getScheduleColumn(now);
+        const timesList = scheduleMap[col] || [];
+        
+        const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
+        const etas = [];
 
-        async function refreshData() {
-            const tbody = document.getElementById('bus-table-body');
-            tbody.innerHTML = '';
-            for (const bus of busRoutes) {
-                const etas = bus.api.startsWith('http') ? await fetchAPI(bus) : await getStaticETA(bus);
-                if (!etas || etas.length === 0) continue;
-                const row = `
-                    <tr class="border-t hover:bg-gray-50">
-                        <td class="p-3 font-medium text-gray-500">${bus.id}</td>
-                        <td class="p-3 text-sm">${bus.dir}</td>
-                        <td class="p-3 font-bold">${bus.route}</td>
-                        <td class="p-3 text-sm">${bus.from}</td>
-                        <td class="p-3 text-red-600 font-mono font-bold">${etas.join(' ')}</td>
-                    </tr>
-                `;
-                tbody.insertAdjacentHTML('beforeend', row);
+        for (let timeStr of timesList) {
+            const [h, m] = timeStr.split(':').map(Number);
+            const busMinutes = h * 60 + m;
+            const diff = busMinutes - currentTimeMinutes;
+            if (diff >= 0) {
+                etas.push(diff);
+                if (etas.length >= 3) break;
             }
         }
+        return etas;
+    }
 
-        setInterval(() => {
-            updateClock();
-        }, 1000);
+    async function fetchApiEtas(url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) return [];
+            const json = await response.json();
+            const now = new Date();
+            const etas = [];
 
-        setInterval(() => {
-            refreshData();
-        }, 10000);
+            let etaList = [];
+            if (json.data && Array.isArray(json.data)) {
+                etaList = json.data;
+            } else if (json.eta && Array.isArray(json.eta)) {
+                etaList = json.eta;
+            }
 
-        (async () => {
-            await checkHoliday();
-            updateClock();
-            refreshData();
-        })();
-    </script>
+            for (let item of etaList) {
+                const etaTimeStr = item.eta;
+                if (!etaTimeStr) continue;
+                
+                const etaDate = new Date(etaTimeStr);
+                const diffMs = etaDate - now;
+                const diffMin = Math.round(diffMs / 60000);
+
+                if (diffMin >= 0) {
+                    etas.push(diffMin);
+                    if (etas.length >= 3) break;
+                }
+            }
+            return etas;
+        } catch (err) {
+            return [];
+        }
+    }
+
+    function formatEtaPills(etas) {
+        return etas.map(min => {
+            let className = "eta-pill ";
+            if (min <= 3) className += "eta-soon";
+            else if (min <= 10) className += "eta-medium";
+            else className += "eta-far";
+            return `<span class="${className}">${min}</span>`;
+        }).join(' ');
+    }
+
+    async function updateDashboard() {
+        const now = new Date();
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Hong_Kong' };
+        const formatter = new Intl.DateTimeFormat('en-GB', options);
+        document.getElementById('current-datetime').innerText = formatter.format(now);
+
+        const tbody = document.getElementById('bus-data-body');
+        let htmlRows = '';
+
+        for (let item of busInstructions) {
+            let etas = [];
+            if (item.co === "屋苑") {
+                etas = calculateStaticEtas(item.source, now);
+            } else {
+                etas = await fetchApiEtas(item.source);
+            }
+
+            // Skip rendering the row entirely if no valid ETAs are available
+            if (!etas || etas.length === 0) {
+                continue;
+            }
+
+            htmlRows += `
+                <tr>
+                    <td>${item.dir}</td>
+                    <td><span class="route-badge">${item.route}</span></td>
+                    <td>${item.stop}</td>
+                    <td>${formatEtaPills(etas)}</td>
+                </tr>
+            `;
+        }
+
+        // Handle case where all routes have ended for the day
+        if (htmlRows === '') {
+            htmlRows = `<tr><td colspan="4" style="text-align: center; padding: 20px;" class="status-msg">今日所有班次經已結束</td></tr>`;
+        }
+
+        tbody.innerHTML = htmlRows;
+    }
+
+    window.addEventListener('load', async () => {
+        await loadHkHolidays();
+        updateDashboard();
+        setInterval(updateDashboard, 10000);
+    });
+</script>
+
 </body>
 </html>
